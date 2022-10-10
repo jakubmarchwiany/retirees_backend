@@ -8,13 +8,12 @@ import WrongCredentialsException from "../middleware/exceptions/wrong-credential
 import TokenData from "../models/token-data-interface";
 import { USERS } from "../tmp/users";
 import catchError from "../utils/catch-error";
-import GoogleBot from "../utils/google-bot";
+
 const { JWT_SECRET } = process.env;
 
 class AuthenticationController implements Controller {
   public router = Router();
   public path = "/auth";
-  private readonly googleBot = new GoogleBot();
 
   constructor() {
     this.initializeRoutes();
