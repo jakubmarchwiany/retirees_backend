@@ -32,7 +32,11 @@ class AuthenticationController implements Controller {
       if (element.username == username) {
         if (element.password == password) {
           const tokenData = this.createAuthenticationToken();
-          res.setHeader("Set-Cookie", [this.createCookie(tokenData)]);
+          // res.setHeader("Set-Cookie", [this.createCookie(tokenData)]);
+          res.cookie("Authorization", tokenData.token, {
+            maxAge: tokenData.expiresIn * 1000,
+            path: "/",
+          });
           res.send({
             message: "Udało się zalogować",
           });
@@ -63,9 +67,9 @@ class AuthenticationController implements Controller {
     };
   }
 
-  private createCookie(tokenData: TokenData) {
-    return `Authorization=${tokenData.token}; Max-Age=${tokenData.expiresIn}; path=/;`;
-  }
+  // private createCookie(tokenData: TokenData) {
+  //   return `Authorization=${tokenData.token}; Max-Age=${tokenData.expiresIn}; path=/;`;
+  // }
 
   private logOut = (req: Request, res: Response) => {
     res.setHeader("Set-Cookie", ["Authorization=; Max-Age=0; path=/;"]);
