@@ -7,16 +7,13 @@ import HttpException from "../middleware/exceptions/http-exception";
 import Post from "../models/post-interface";
 
 const {
-  PROJECT_ID,
-  GCLOUD_STORAGE_IMAGE_BUCKET,
-  KEY_FILE_NAME,
   NODE_ENV,
-  DEV_POSTS_JSON_PATH,
-  PRO_POSTS_JSON_PATH,
+  PROJECT_ID,
+  KEY_FILE_NAME,
+  GOOGLE_BUCKET_NAME,
+  POSTS_FOLDER,
+  POSTS_FILE_NAME,
 } = process.env;
-
-const postsPath =
-  NODE_ENV === "development" ? DEV_POSTS_JSON_PATH : PRO_POSTS_JSON_PATH;
 
 class GoogleBot {
   private readonly storage;
@@ -37,22 +34,26 @@ class GoogleBot {
         this.checkFileType(file, cb);
       },
     });
-    this.imageBucket = this.storage.bucket(GCLOUD_STORAGE_IMAGE_BUCKET);
+    this.imageBucket = this.storage.bucket(GOOGLE_BUCKET_NAME);
   }
 
   public getPosts = async () => {
     const data = await this.storage
-      .bucket(GCLOUD_STORAGE_IMAGE_BUCKET)
-      .file(postsPath)
+      .bucket(GOOGLE_BUCKET_NAME)
+      .file(`${NODE_ENV}/${POSTS_FILE_NAME}`)
       .download();
 
     return JSON.parse(data.toString());
   };
 
   public updatePosts = async (data: Post[]) => {
-    const file = this.imageBucket.file(postsPath);
-    const contents = JSON.stringify(data);
-    await file.save(contents);
+    const file = this.imageBucket.file(`${NODE_ENV}/${POSTS_FILE_NAME}`);
+
+    const content = JSON.stringify(data);
+
+    await file.save(content, {
+      metadata: { cacheControl: "no-store" },
+    });
   };
 
   private checkFileType(file: Express.Multer.File, cb: FileFilterCallback) {
@@ -77,22 +78,27 @@ class GoogleBot {
         .webp({ quality: 90 })
         .toBuffer();
 
-      const uniqueName = uuidv4();
-      const imageFile = this.imageBucket.file(uniqueName + ".webp");
+      const uniqueName = uuidv4() + ".webp";
+      const imageFile = this.imageBucket.file(
+        `${NODE_ENV}/${POSTS_FOLDER}/${uniqueName}`
+      );
       await imageFile.save(convertedImage);
 
-      return uniqueName + ".webp";
+      return uniqueName;
     } catch (e) {
       console.log(e);
       throw new HttpException(500, "Błąd podczas zapisu zdjęcia");
     }
   };
 
-  public deleteUserImage = async (fileName: string) => {
+  public deleteUserImage = async (imageID: string) => {
     try {
-      const file = this.imageBucket.file(fileName);
+      const file = this.imageBucket.file(
+        `${NODE_ENV}/${POSTS_FOLDER}/${imageID}`
+      );
       await file.delete();
     } catch (e) {
+      console.log(e);
       throw new HttpException(500, "Błąd podczas usuwania zdjęcia");
     }
   };

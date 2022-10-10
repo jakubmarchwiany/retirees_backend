@@ -7,21 +7,17 @@ import Post from "../models/post-interface";
 import catchError from "../utils/catch-error";
 import GoogleBot from "../utils/google-bot";
 
-const { NODE_ENV } = process.env;
-
 class PostController implements Controller {
   public router = Router();
   public path = "/posts";
   private readonly googleBot = new GoogleBot();
-  private allPosts: Post[] = [];
 
   constructor() {
     this.initializeRoutes();
-    this.loadPosts();
   }
 
   private initializeRoutes() {
-    this.router.get(``, catchError(this.getPosts));
+    this.router.get(`/get`, catchError(this.getPosts));
     this.router.post(
       `/new-trip`,
       authMiddleware,
@@ -46,26 +42,17 @@ class PostController implements Controller {
   }
 
   private getPosts = async (req: Request, res: Response) => {
-    const page = parseInt(req.query.page.toString());
-
-    const slicePosts = this.allPosts.slice(page * 5, page * 5 + 5);
-    const numberOfPages = Math.ceil(this.allPosts.length / 5);
-    res.send({
-      message: "Udało się pobrać posty",
-      posts: slicePosts,
-      numberOfPages: numberOfPages,
-    });
-  };
-
-  private loadPosts = async () => {
-    this.allPosts = await this.googleBot.getPosts();
+    const allPosts = await this.googleBot.getPosts();
+    res.send({ message: "Udało się pobrać posty", posts: allPosts });
   };
 
   private newInformation = async (req: Request, res: Response) => {
     const { title, startDate, content } = req.body;
 
+    const allPosts = await this.googleBot.getPosts();
+
     let i = 0;
-    for (const oldPost of this.allPosts) {
+    for (const oldPost of allPosts) {
       if (new Date(oldPost.startDate) > new Date(startDate)) {
         i++;
       } else {
@@ -73,7 +60,7 @@ class PostController implements Controller {
       }
     }
 
-    this.allPosts.splice(i, 0, {
+    allPosts.splice(i, 0, {
       id: uuidv4(),
       isTrip: false,
       title,
@@ -81,7 +68,7 @@ class PostController implements Controller {
       content,
     });
 
-    await this.googleBot.updatePosts(this.allPosts);
+    await this.googleBot.updatePosts(allPosts);
 
     res.send({
       message: "Udało się dodać informacje",
@@ -90,15 +77,12 @@ class PostController implements Controller {
 
   private newTrip = async (req: Request, res: Response) => {
     const { title, startDate, endDate, content } = req.body;
-    let imageID;
-    if (NODE_ENV === "production") {
-      imageID = await this.googleBot.saveNewUserImage(req.file);
-    } else {
-      imageID = "test.png";
-    }
+    const imageID = await this.googleBot.saveNewUserImage(req.file);
+
+    const allPosts = await this.googleBot.getPosts();
 
     let i = 0;
-    for (const oldPost of this.allPosts) {
+    for (const oldPost of allPosts) {
       if (new Date(oldPost.startDate) > new Date(startDate)) {
         i++;
       } else {
@@ -106,7 +90,7 @@ class PostController implements Controller {
       }
     }
 
-    this.allPosts.splice(i, 0, {
+    allPosts.splice(i, 0, {
       id: uuidv4(),
       isTrip: true,
       title,
@@ -116,7 +100,7 @@ class PostController implements Controller {
       content,
     });
 
-    await this.googleBot.updatePosts(this.allPosts);
+    await this.googleBot.updatePosts(allPosts);
 
     res.send({
       message: "Udało się dodać wycieczkę",
@@ -126,14 +110,16 @@ class PostController implements Controller {
   private deleteInformation = async (req: Request, res: Response) => {
     const { id } = req.params;
 
-    for (let i = 0; i < this.allPosts.length; i++) {
-      if (this.allPosts[i].id === id) {
-        this.allPosts.splice(i, 1);
+    const allPosts = await this.googleBot.getPosts();
+
+    for (let i = 0; i < allPosts.length; i++) {
+      if (allPosts[i].id === id) {
+        allPosts.splice(i, 1);
         break;
       }
     }
 
-    await this.googleBot.updatePosts(this.allPosts);
+    await this.googleBot.updatePosts(allPosts);
 
     res.send({
       message: "Udało się usunąć informacje",
@@ -143,19 +129,20 @@ class PostController implements Controller {
   private deleteTrip = async (req: Request, res: Response) => {
     const { id } = req.params;
 
-    const trip: Post = this.allPosts.find((x) => x.id === id);
+    const allPosts = await this.googleBot.getPosts();
 
-    if (NODE_ENV === "production")
-      await this.googleBot.deleteUserImage(trip.imageID);
+    const trip: Post = allPosts.find((x: Post) => x.id === id);
 
-    for (let i = 0; i < this.allPosts.length; i++) {
-      if (this.allPosts[i].id === id) {
-        this.allPosts.splice(i, 1);
+    await this.googleBot.deleteUserImage(trip.imageID);
+
+    for (let i = 0; i < allPosts.length; i++) {
+      if (allPosts[i].id === id) {
+        allPosts.splice(i, 1);
         break;
       }
     }
 
-    await this.googleBot.updatePosts(this.allPosts);
+    await this.googleBot.updatePosts(allPosts);
 
     res.send({
       message: "Udało się usunąć wycieczkę",
