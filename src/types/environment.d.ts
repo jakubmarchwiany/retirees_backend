@@ -18,11 +18,13 @@ declare global {
       // google cloud settings
       PROJECT_ID: string;
       KEY_FILE_NAME: string;
-      DEV_POSTS_JSON_PATH: string;
-      PRO_POSTS_JSON_PATH: string;
 
-      // User default image and path
-      GCLOUD_STORAGE_IMAGE_BUCKET: string;
+      //google bucket settings
+      GOOGLE_BUCKET_NAME: string;
+
+      POSTS_FILE_NAME: string;
+      POSTS_FOLDER: string;
+      GOOGLE_BUCKET_URL: string;
     }
   }
 }

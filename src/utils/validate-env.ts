@@ -18,11 +18,13 @@ function validateEnv() {
     // google cloud settings
     PROJECT_ID: str(),
     KEY_FILE_NAME: str(),
-    DEV_POSTS_JSON_PATH: str(),
-    PRO_POSTS_JSON_PATH: str(),
 
-    // User default image and path
-    GCLOUD_STORAGE_IMAGE_BUCKET: str(),
+    //google bucket settings
+    GOOGLE_BUCKET_NAME: str(),
+
+    POSTS_FILE_NAME: str(),
+    POSTS_FOLDER: str(),
+    GOOGLE_BUCKET_URL: str(),
   });
 }
 export default validateEnv;
