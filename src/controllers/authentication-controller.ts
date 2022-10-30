@@ -60,7 +60,7 @@ class AuthenticationController implements Controller {
   };
 
   private createAuthenticationToken(): TokenData {
-    const expiresIn = 60 * 60;
+        const expiresIn = parseInt(TOKEN_EXPIRE_AFTER);
     return {
       expiresIn,
       token: jwt.sign({}, JWT_SECRET, { expiresIn }),
