@@ -8,145 +8,137 @@ import catchError from "../utils/catch-error";
 import GoogleBot from "../utils/google-bot";
 
 class PostController implements Controller {
-  public router = Router();
-  public path = "/posts";
-  private readonly googleBot = new GoogleBot();
+    public router = Router();
+    public path = "/posts";
+    private readonly googleBot = new GoogleBot();
 
-  constructor() {
-    this.initializeRoutes();
-  }
-
-  private initializeRoutes() {
-    this.router.get(`/get`, catchError(this.getPosts));
-    this.router.post(
-      `/new-trip`,
-      authMiddleware,
-      this.googleBot.multer.single("image"),
-      catchError(this.newTrip)
-    );
-    this.router.post(
-      `/new-information`,
-      authMiddleware,
-      catchError(this.newInformation)
-    );
-    this.router.get(
-      `/delete-trip/:id`,
-      authMiddleware,
-      catchError(this.deleteTrip)
-    );
-    this.router.get(
-      `/delete-information/:id`,
-      authMiddleware,
-      catchError(this.deleteInformation)
-    );
-  }
-
-  private getPosts = async (req: Request, res: Response) => {
-    const allPosts = await this.googleBot.getPosts();
-    res.send({ message: "Udało się pobrać posty", posts: allPosts });
-  };
-
-  private newInformation = async (req: Request, res: Response) => {
-    const { title, startDate, content } = req.body;
-
-    const allPosts = await this.googleBot.getPosts();
-
-    let i = 0;
-    for (const oldPost of allPosts) {
-      if (new Date(oldPost.startDate) > new Date(startDate)) {
-        i++;
-      } else {
-        break;
-      }
+    constructor() {
+        this.initializeRoutes();
     }
 
-    allPosts.splice(i, 0, {
-      id: uuidv4(),
-      isTrip: false,
-      title,
-      startDate,
-      content,
-    });
-
-    await this.googleBot.updatePosts(allPosts);
-
-    res.send({
-      message: "Udało się dodać informacje",
-    });
-  };
-
-  private newTrip = async (req: Request, res: Response) => {
-    const { title, startDate, endDate, content } = req.body;
-    const imageID = await this.googleBot.saveNewUserImage(req.file);
-
-    const allPosts = await this.googleBot.getPosts();
-
-    let i = 0;
-    for (const oldPost of allPosts) {
-      if (new Date(oldPost.startDate) > new Date(startDate)) {
-        i++;
-      } else {
-        break;
-      }
+    private initializeRoutes() {
+        this.router.get(`/get`, catchError(this.getPosts));
+        this.router.post(
+            `/new-trip`,
+            authMiddleware,
+            this.googleBot.multer.single("image"),
+            catchError(this.newTrip)
+        );
+        this.router.post(`/new-information`, authMiddleware, catchError(this.newInformation));
+        this.router.get(`/delete-trip/:id`, authMiddleware, catchError(this.deleteTrip));
+        this.router.get(
+            `/delete-information/:id`,
+            authMiddleware,
+            catchError(this.deleteInformation)
+        );
     }
 
-    allPosts.splice(i, 0, {
-      id: uuidv4(),
-      isTrip: true,
-      title,
-      startDate,
-      endDate,
-      imageID,
-      content,
-    });
+    private getPosts = async (req: Request, res: Response) => {
+        const allPosts = await this.googleBot.getPosts();
+        res.send({ message: "Udało się pobrać posty", posts: allPosts });
+    };
 
-    await this.googleBot.updatePosts(allPosts);
+    private newInformation = async (req: Request, res: Response) => {
+        const { title, startDate, content } = req.body;
 
-    res.send({
-      message: "Udało się dodać wycieczkę",
-    });
-  };
+        const allPosts = await this.googleBot.getPosts();
 
-  private deleteInformation = async (req: Request, res: Response) => {
-    const { id } = req.params;
+        let i = 0;
+        for (const oldPost of allPosts) {
+            if (new Date(oldPost.startDate) > new Date(startDate)) {
+                i++;
+            } else {
+                break;
+            }
+        }
 
-    const allPosts = await this.googleBot.getPosts();
+        allPosts.splice(i, 0, {
+            id: uuidv4(),
+            isTrip: false,
+            title,
+            startDate,
+            content,
+        });
 
-    for (let i = 0; i < allPosts.length; i++) {
-      if (allPosts[i].id === id) {
-        allPosts.splice(i, 1);
-        break;
-      }
-    }
+        await this.googleBot.updatePosts(allPosts);
 
-    await this.googleBot.updatePosts(allPosts);
+        res.send({
+            message: "Udało się dodać informacje",
+        });
+    };
 
-    res.send({
-      message: "Udało się usunąć informacje",
-    });
-  };
+    private newTrip = async (req: Request, res: Response) => {
+        const { title, startDate, endDate, content } = req.body;
+        const imageID = await this.googleBot.saveNewUserImage(req.file);
 
-  private deleteTrip = async (req: Request, res: Response) => {
-    const { id } = req.params;
+        const allPosts = await this.googleBot.getPosts();
 
-    const allPosts = await this.googleBot.getPosts();
+        let i = 0;
+        for (const oldPost of allPosts) {
+            if (new Date(oldPost.startDate) > new Date(startDate)) {
+                i++;
+            } else {
+                break;
+            }
+        }
 
-    const trip: Post = allPosts.find((x: Post) => x.id === id);
+        allPosts.splice(i, 0, {
+            id: uuidv4(),
+            isTrip: true,
+            title,
+            startDate,
+            endDate,
+            imageID,
+            content,
+        });
 
-    await this.googleBot.deleteUserImage(trip.imageID);
+        await this.googleBot.updatePosts(allPosts);
 
-    for (let i = 0; i < allPosts.length; i++) {
-      if (allPosts[i].id === id) {
-        allPosts.splice(i, 1);
-        break;
-      }
-    }
+        res.send({
+            message: "Udało się dodać wycieczkę",
+        });
+    };
 
-    await this.googleBot.updatePosts(allPosts);
+    private deleteInformation = async (req: Request, res: Response) => {
+        const { id } = req.params;
 
-    res.send({
-      message: "Udało się usunąć wycieczkę",
-    });
-  };
+        const allPosts = await this.googleBot.getPosts();
+
+        for (let i = 0; i < allPosts.length; i++) {
+            if (allPosts[i].id === id) {
+                allPosts.splice(i, 1);
+                break;
+            }
+        }
+
+        await this.googleBot.updatePosts(allPosts);
+
+        res.send({
+            message: "Udało się usunąć informacje",
+        });
+    };
+
+    private deleteTrip = async (req: Request, res: Response) => {
+        const { id } = req.params;
+
+        const allPosts = await this.googleBot.getPosts();
+
+        const trip: Post = allPosts.find((x: Post) => x.id === id);
+
+        await this.googleBot.deleteUserImage(trip.imageID);
+
+        for (let i = 0; i < allPosts.length; i++) {
+            if (allPosts[i].id === id) {
+                allPosts.splice(i, 1);
+                break;
+            }
+        }
+
+        await this.googleBot.updatePosts(allPosts);
+
+        res.send({
+            message: "Udało się usunąć wycieczkę",
+        });
+    };
 }
 export default PostController;
