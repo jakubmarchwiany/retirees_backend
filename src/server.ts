@@ -2,7 +2,7 @@ import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
 import cors, { CorsOptions } from "cors";
 import express, { NextFunction, Request, Response } from "express";
-import Controller from "./interfaces/controller-interface";
+import Controller from "./models/controller-interface";
 import errorMiddleware from "./middleware/error-middleware";
 import HttpException from "./middleware/exceptions/http-exception";
 

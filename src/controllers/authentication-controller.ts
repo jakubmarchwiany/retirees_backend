@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request, Response, Router } from "express";
 import jwt from "jsonwebtoken";
-import Controller from "../interfaces/controller-interface";
+import Controller from "../models/controller-interface";
 import authMiddleware from "../middleware/auth-middleware";
 import WrongCredentialsException from "../middleware/exceptions/wrong-credentials-exception";
 import TokenData from "../models/token-data-interface";
