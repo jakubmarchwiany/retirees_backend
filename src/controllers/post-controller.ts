@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request, Response, Router } from "express";
 import { v4 as uuidv4 } from "uuid";
-import Controller from "../interfaces/controller-interface";
+import Controller from "../models/controller-interface";
 import authMiddleware from "../middleware/auth-middleware";
 import Post from "../models/post-interface";
 import catchError from "../utils/catch-error";
@@ -43,16 +43,7 @@ class PostController implements Controller {
 
         const allPosts = await this.googleBot.getPosts();
 
-        let i = 0;
-        for (const oldPost of allPosts) {
-            if (new Date(oldPost.startDate) > new Date(startDate)) {
-                i++;
-            } else {
-                break;
-            }
-        }
-
-        allPosts.splice(i, 0, {
+        allPosts.unshift({
             id: uuidv4(),
             isTrip: false,
             title,
@@ -73,16 +64,7 @@ class PostController implements Controller {
 
         const allPosts = await this.googleBot.getPosts();
 
-        let i = 0;
-        for (const oldPost of allPosts) {
-            if (new Date(oldPost.startDate) > new Date(startDate)) {
-                i++;
-            } else {
-                break;
-            }
-        }
-
-        allPosts.splice(i, 0, {
+        allPosts.unshift({
             id: uuidv4(),
             isTrip: true,
             title,
